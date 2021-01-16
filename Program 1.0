@@ -1,8 +1,6 @@
 #include <iostream>
 #include "mbed.h"
 
-Timer timer;
-
 //inputs
 InterruptIn IRsensor(A0);
 DigitalIn start(A1);
@@ -14,122 +12,97 @@ DigitalIn schakelaar_rechts(A4);
 DigitalOut motor_links(D4);
 DigitalOut motor_rechts(D7);
 
-enum modus{
+enum modus {
 
     HOMING,
     SAFETY,
     IDLE,
-    LEFT_TO_RIGHT,
     RIGHT_TO_LEFT,
-    SLEEP,
-    WAITRL,
-    WAITLR
-      
-};    
+    LEFT_TO_RIGHT,
+    SLEEP
+
+};
 
 modus status = HOMING;
 
-int main(){
+int main() {
 
     motor_links = 0;
     motor_rechts = 0;
 
-    while (1){
+    while (1) {
 
-        switch (status){
+        switch (status) {
 
-            case HOMING:                        // in deze case wordt motor rechts aangestuurd en zullen de borstels naar rechts bewegen (naar home positie)
+        case HOMING:                        // in deze case wordt motor rechts aangestuurd en zullen de borstels naar rechts bewegen (naar home positie)
 
-                printf("HOMING\n");
-                motor_rechts = 1;
-                motor_links = 0;
-       
-                if(schakelaar_rechts) status = IDLE;
-                else if(IRsensor) status = SAFETY;
-           
-            break;
+            printf("HOMING\n");
+            motor_rechts = 1;
+            motor_links = 0;
 
-            case SAFETY:                          // in deze case zal het syteem stilstaan, voor de veiligheid
-
-                printf("SAFETY\n");    
-                motor_rechts = 0;
-                motor_links = 0;
-                
-                if(start && !IRsensor) status = HOMING;
-             
-            break; 
-
-            case SLEEP:                          // in deze case worden beide motoren op stil gezet en wordt er twee seconden gewacht
-
-                printf("SLEEP\n"); 
-                motor_rechts = 0;
-                motor_links = 0;   
-                
-                ThisThread::sleep_for(2000);
-                status = HOMING; 
-
-            break; 
-
-            case IDLE:                          // in deze case worden beide motoren op stil gezet, dit is de rustpositie van het syteem
-
-                printf("IDLE\n");    
-                motor_rechts = 0;
-                motor_links = 0;
-                
-                if(start) status = WAITRL;
-                else if(IRsensor) status = SAFETY;
-
-            break; 
-
-            case WAITRL:                          // in deze case worden beide motoren op stil gezet en wordt er 0,75 seconden gewacht
-                
-                printf("WAITRL\n"); 
-                motor_rechts = 0;
-                motor_links = 0;   
-                
-                ThisThread::sleep_for(750);
-                status = RIGHT_TO_LEFT;
-             
-            break; 
-                        
-            case WAITLR:                          // in deze case worden beide motoren op stil gezet en wordt er 0,75 seconden gewacht
-
-                
-                printf("WAITLR\n"); 
-                motor_rechts = 0;
-                motor_links = 0;   
-                
-                ThisThread::sleep_for(750);
-                status = LEFT_TO_RIGHT;
-             
-            break; 
-
-            case RIGHT_TO_LEFT:                 // in deze case wordt motor links aangestuurd en zullen de borstels naar links bewegen
-
-                printf("RL\n");               
-                motor_links = 1;
-                motor_rechts = 0;
-                           
-                if(schakelaar_links) status = WAITLR;   
-                else if(IRsensor) status = IDLE;
-                else if(stop) status = SLEEP;
+            if (schakelaar_rechts) status = IDLE;
+            else if (IRsensor) status = SAFETY;
 
             break;
 
-            case LEFT_TO_RIGHT:                 // in deze case wordt motor rechts aangestuurd en zullen de borstels naar rechts bewegen
+        case SAFETY:                          // in deze case zal het syteem stilstaan, voor de veiligheid
 
-                printf("LR\n");
-                motor_rechts = 1;
-                motor_links = 0;
-               
-                if(schakelaar_rechts) status = IDLE;
-                else if(IRsensor) status = SAFETY;
-                else if(stop) status = SLEEP;
+            printf("SAFETY\n");
+            motor_rechts = 0;
+            motor_links = 0;
+
+            if (start && !IRsensor) status = HOMING;
+
+            break;
+
+        case SLEEP:                          // in deze case worden beide motoren op stil gezet en wordt er twee seconden gewacht
+
+            printf("SLEEP\n");
+            motor_rechts = 0;
+            motor_links = 0;
+
+            ThisThread::sleep_for(2000);
+            status = HOMING;
+
+            break;
+
+        case IDLE:                          // in deze case worden beide motoren op stil gezet, dit is de rustpositie van het syteem
+
+            printf("IDLE\n");
+            motor_rechts = 0;
+            motor_links = 0;
+
+            if (start) status = RIGHT_TO_LEFT;
+            else if (IRsensor) status = SAFETY;
+
+            break;
+
+        case RIGHT_TO_LEFT:                 // in deze case wordt motor links aangestuurd en zullen de borstels naar links bewegen
+
+            printf("RL\n");
+            motor_links = 1;
+            motor_rechts = 0;
+
+            if (schakelaar_links) status = LEFT_TO_RIGHT;
+            else if (IRsensor) status = SAFETY;
+            else if (stop) status = SLEEP;
+
+            break;
+
+        case LEFT_TO_RIGHT:                 // in deze case wordt motor rechts aangestuurd en zullen de borstels naar rechts bewegen
+
+            printf("LR\n");
+            motor_rechts = 1;
+            motor_links = 0;
+
+            if (schakelaar_rechts) status = IDLE;
+            else if (IRsensor) status = SAFETY;
+            else if (stop) status = SLEEP;
 
             break;
         }
 
     }
 
-	return 0;
+    return 0;
 }
